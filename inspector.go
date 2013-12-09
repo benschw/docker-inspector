@@ -13,45 +13,11 @@ import (
 	"encoding/json"
 )
 
-var (
-	containerId string
-	socketPath  string
-)
-
-func getJsonBytes(socketPath string, path string) ([]byte, error) {
-	req, err := http.NewRequest("GET", path, nil)
-	if err != nil {
-        return nil, err
-	}
-	dial, err := net.Dial("unix", socketPath)
-	if err != nil {
-        return nil, err
-	}
-
-	var resp *http.Response
-	clientconn := httputil.NewClientConn(dial, nil)
-	resp, err = clientconn.Do(req)
-	defer clientconn.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
-		return nil, errors.New("bad status code")
-	}
+var socketPath string
 
 
-	if resp.Header.Get("Content-Type") != "application/json" {
-        return nil, errors.New("expected application/json")
-	}
-
-	defer resp.Body.Close()
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        return nil, err
-    }
-
-	return body, nil
-}
-
-
+/* Types for parsing docker's json response
+ */
 type address struct {
 	HostIp string
 	HostPort string
@@ -65,13 +31,15 @@ type networkSettings struct {
 }
 
 type container struct {
-    ID string
-    Created string
-    Path string
-    NetworkSettings networkSettings
+	ID string
+	Created string
+	Path string
+	NetworkSettings networkSettings
 }
 
 
+/* Type for encoding our app's response
+ */
 type myContainer struct {
 	Id string
 	IpAddress string
@@ -80,23 +48,56 @@ type myContainer struct {
 }
 
 
-func getJsonBytesResp(socketPath string, containerId string) ([]byte, error) {
-	b, err := getJsonBytes(socketPath, "/containers/"+containerId+"/json")
-    if err != nil {
-        return nil, err
-    }
+func inspectDockerSocker(socketPath string, path string) ([]byte, error) {
+	req, err := http.NewRequest("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	dial, err := net.Dial("unix", socketPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp *http.Response
+	clientconn := httputil.NewClientConn(dial, nil)
+	resp, err = clientconn.Do(req)
+	defer clientconn.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
+		return nil, errors.New("bad status code")
+	}
+
+
+	if resp.Header.Get("Content-Type") != "application/json" {
+		return nil, errors.New("expected application/json")
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+func getInspectionResponse(socketPath string, containerId string) ([]byte, error) {
+	b, err := inspectDockerSocker(socketPath, "/containers/"+containerId+"/json")
+	if err != nil {
+		return nil, err
+	}
 
 	var t container
 	err = json.Unmarshal(b, &t)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    out := new(myContainer)
-    out.Id = t.ID
-    out.IpAddress = t.NetworkSettings.IPAddress
-    out.Gateway = t.NetworkSettings.Gateway
-    out.Ports = make(map[string]string)
+	out := new(myContainer)
+	out.Id = t.ID
+	out.IpAddress = t.NetworkSettings.IPAddress
+	out.Gateway = t.NetworkSettings.Gateway
+	out.Ports = make(map[string]string)
 
 
 	for k, v := range t.NetworkSettings.Ports {
@@ -106,11 +107,11 @@ func getJsonBytesResp(socketPath string, containerId string) ([]byte, error) {
 	}
 
 	bOut, err := json.Marshal(out)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return bOut, nil
+	return bOut, nil
 }
 
 func main() {
@@ -121,13 +122,13 @@ func main() {
 
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	    cid := r.URL.Path[len("/"):]
-	 	log.Println("handling "+cid)
+		cid := r.URL.Path[len("/"):]
+		log.Println("handling "+cid)
 
-		b, err := getJsonBytesResp(socketPath, cid)
-	    if err != nil {
-	        return
-	    }
+		b, err := getInspectionResponse(socketPath, cid)
+		if err != nil {
+			return
+		}
 
 		s := string(b[:])
 
@@ -135,8 +136,5 @@ func main() {
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
-
-
-
 
 }
