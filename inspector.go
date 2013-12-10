@@ -1,3 +1,15 @@
+/*
+  inspector is a rest app which will query a Docker socket
+  using the Docker API to get gateway / port information about
+  a running container.
+
+  It's design, is to be run in a container with /var/run mounted
+  locally so it can query the docker instance running on its
+  host. This allows another container to link the inspector container
+  in and ask for it's route details (i.e. what is the gateway IP
+  and what port am i publically exposed on) 
+
+*/
 package main
 
 import (
@@ -17,8 +29,7 @@ import (
 var socketPath string
 
 
-/* Types for parsing docker's json response
- */
+// Types for parsing docker's json response
 type address struct {
 	HostIp string
 	HostPort string
