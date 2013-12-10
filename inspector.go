@@ -123,7 +123,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		cid := r.URL.Path[len("/"):]
-		log.Println("handling "+cid)
+		log.Println("inspecting "+cid)
 
 		b, err := getInspectionResponse(socketPath, cid)
 		if err != nil {
