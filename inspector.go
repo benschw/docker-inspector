@@ -9,6 +9,21 @@
   in and ask for it's route details (i.e. what is the gateway IP
   and what port am i publically exposed on) 
 
+  e.g. 
+  request:
+	GET http://$FOO_PORT_8080_TCP_ADDR:8080/$HOSTNAME
+
+  response:
+        {
+            "Id": "30b193cacf05eb8561769857ec798c49f88acb51b4d6129d04767c5e3f49e7d2",
+            "IpAddress": "172.17.0.19",
+            "Gateway": "172.17.42.1",
+            "Ports": {
+                "1234/tcp": "49158"
+            }
+        }
+
+
 */
 package main
 
