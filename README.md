@@ -12,7 +12,6 @@
 	docker run -d -v /var/run/:/docker benschw/inspector
 
 
-
 ### Usage
 
 When you run your container, link in an instance of `benschw/inspector`:
