@@ -48,7 +48,7 @@ type myContainer struct {
 }
 
 
-func inspectDockerSocker(socketPath string, path string) ([]byte, error) {
+func inspectDockerSocket(socketPath string, path string) ([]byte, error) {
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func inspectDockerSocker(socketPath string, path string) ([]byte, error) {
 }
 
 func getInspectionResponse(socketPath string, containerId string) ([]byte, error) {
-	b, err := inspectDockerSocker(socketPath, "/containers/"+containerId+"/json")
+	b, err := inspectDockerSocket(socketPath, "/containers/"+containerId+"/json")
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +132,8 @@ func main() {
 
 		s := string(b[:])
 
+	    w.Header().Set("Content-Type", "application/json")
+	
 		fmt.Fprintf(w, "%s", s)
 	})
 
