@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/benschw/docker-inspector.png?branch=master)](https://travis-ci.org/benschw/docker-inspector)
+[![GoDoc](http://godoc.org/github.com/benschw/docker-inspector?status.png)](http://godoc.org/github.com/benschw/docker-inspector)
 
 ## Docker Inspector
 
